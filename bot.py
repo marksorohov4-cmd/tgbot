@@ -15,6 +15,13 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)
 CHANNEL_URL = "https://t.me/egor_physmat"
 
+# Соцсети: (подпись кнопки, ссылка)
+SOCIAL_LINKS = [
+    ("▶️ YouTube", "https://youtube.com/@shamshura_physmath"),
+    ("🎵 TikTok", "https://www.tiktok.com/@egorphismath"),
+    ("📸 Instagram", "https://www.instagram.com/egorphismath"),
+]
+
 if not BOT_TOKEN:
     raise SystemExit("Не задан BOT_TOKEN в файле .env")
 
@@ -32,7 +39,16 @@ def main_menu():
     kb.button(text="ℹ️ О боте", callback_data="about")
     kb.button(text="🆔 Мой ID", callback_data="myid")
     kb.button(text="📢 Наш канал", url=CHANNEL_URL)
-    kb.adjust(2, 1)  # первый ряд: 2 кнопки, второй ряд: 1 кнопка
+    kb.button(text="🌐 Мы в соцсетях", callback_data="social")
+    kb.adjust(2, 2)  # две строки по две кнопки
+    return kb.as_markup()
+
+
+def social_menu():
+    kb = InlineKeyboardBuilder()
+    for title, url in SOCIAL_LINKS:
+        kb.button(text=title, url=url)
+    kb.adjust(1)  # каждая кнопка в своей строке
     return kb.as_markup()
 
 
@@ -50,6 +66,7 @@ async def cmd_help(message: Message):
         "/start — главное меню\n"
         "/help — эта справка\n"
         "/id — твой Telegram ID\n"
+        "/social — наши соцсети\n"
         "/admin — команда только для администратора\n\n"
         "Любой другой текст я просто повторю."
     )
@@ -60,6 +77,14 @@ async def cmd_id(message: Message):
     await message.answer(
         f"Твой ID: <code>{message.from_user.id}</code>",
         parse_mode=ParseMode.HTML,
+    )
+
+
+@router.message(Command("social"))
+async def cmd_social(message: Message):
+    await message.answer(
+        "Мы в соцсетях. Выбери платформу:",
+        reply_markup=social_menu(),
     )
 
 
@@ -82,6 +107,15 @@ async def cb_myid(call: CallbackQuery):
     await call.message.answer(
         f"Твой ID: <code>{call.from_user.id}</code>",
         parse_mode=ParseMode.HTML,
+    )
+    await call.answer()
+
+
+@router.callback_query(F.data == "social")
+async def cb_social(call: CallbackQuery):
+    await call.message.answer(
+        "Мы в соцсетях. Выбери платформу:",
+        reply_markup=social_menu(),
     )
     await call.answer()
 
